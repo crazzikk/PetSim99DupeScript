@@ -3,7 +3,7 @@ local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 local Window = Rayfield:CreateWindow({
    Name = "DioRUS HUB",
    Icon = 0,
-   LoadingTitle = "Arm Wrestle Simulator",
+   LoadingTitle = "BGSI",
    LoadingSubtitle = "by DiorEЯ",
    Theme = "Default",
    DisableRayfieldPrompts = true,
@@ -35,101 +35,3 @@ local Window = Rayfield:CreateWindow({
 
 local Tab = Window:CreateTab("Open Egg")
 
--- Create the new "Auto Mutate" tab
-local AutoMutateTab = Window:CreateTab("Auto Mutate")
-
-local isPurchasing = false
-local purchaseCoroutine
-local eggsOpened = 0
-local delay = 0.05 -- Initial loop speed delay (50 milliseconds or 0.05 seconds)
-
--- Anti-AFK function
-local function antiAFK()
-    local player = game.Players.LocalPlayer
-    local character = player.Character or player.CharacterAdded:Wait()
-    local humanoid = character:WaitForChild("Humanoid")
-
-    humanoid.WalkSpeed = 0 -- Set walkspeed to 0
-    humanoid.JumpPower = 0 -- Disable jumping
-
-    -- Prevent AFK by resetting position
-    while true do
-        task.wait(30) -- Check every 30 seconds
-        if humanoid and humanoid.Health > 0 then
-            humanoid:Move(Vector3.new(0, 0, 0), false) -- Keep the character in place
-        end
-    end
-end
-
--- Start the anti-AFK function in a coroutine
-coroutine.wrap(antiAFK)()
-
-local function purchaseEgg()
-    task.wait(delay) -- Wait for the specified delay before purchasing the egg
-
-    local args = {
-        [1] = "Sapphire",
-        [2] = nil,
-        [3] = nil,
-        [4] = false,
-        [5] = nil,
-        [6] = true
-    }
-
-    local success, message = pcall(function()
-        return game:GetService("ReplicatedStorage").Packages.Knit.Services.EggService.RF.purchaseEgg:InvokeServer(unpack(args))
-    end)
-
-    if success then
-        local isPurchased = message and message == "EggPurchased" -- Adjust based on actual response
-        if isPurchased then
-            eggsOpened = eggsOpened + 1 -- Increment by 1 for each successful egg purchase
-            print("Egg purchased successfully! Total eggs opened: " .. eggsOpened)
-        else
-            warn("Egg purchase failed or no response.")
-        end
-    else
-        warn("Failed to purchase egg: " .. tostring(message))
-    end
-end
-
-local Toggle = Tab:CreateToggle({
-   Name = "Sapphire Egg",
-   CurrentValue = false,
-   Flag = "Toggle1",
-   Callback = function(Value)
-       isPurchasing = Value
-       if Value then
-           print("Автооткрытие яиц включено.")
-           purchaseCoroutine = coroutine.create(function()
-               while isPurchasing do
-                   purchaseEgg() -- Call purchaseEgg only when the toggle is on
-                   task.wait(0.2)
-               end
-           end)
-           coroutine.resume(purchaseCoroutine)
-       else
-           print("Автооткрытие яиц отключено.")
-           isPurchasing = false
-       end
-   end,
-})
-
--- Create a section for loop speed settings
-local LoopSpeedSection = Tab:CreateSection({
-   Name = "Loop Speed Settings",
-})
-
--- Create a slider to adjust the loop speed (delay between egg purchases)
-local DelaySlider = LoopSpeedSection:CreateSlider({
-   Name = "Loop Speed (ms)",
-   Range = {0, 100},
-   Increment = 1,
-   Suffix = " ms",
-   CurrentValue = 50,  -- Initial delay set to 50 milliseconds
-   Flag = "DelaySlider",
-   Callback = function(Value)
-       delay = Value / 1000  -- Convert milliseconds to seconds
-       print("Loop speed set to " .. Value .. " milliseconds.")
-   end,
-})
